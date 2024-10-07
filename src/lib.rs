@@ -1,18 +1,23 @@
 #![allow(clippy::type_complexity)]
 #![allow(clippy::too_many_arguments)]
 
+pub mod camera;
+pub mod input;
+pub mod player;
+
 pub mod prelude {
     pub use bevy::ecs as bevy_ecs;
     pub use bevy::prelude::*;
 
     pub use avian3d as physics;
     pub use physics::prelude::*;
-
-    pub use crate::{create_app, GameInfo};
 }
+use player::PlayerPlugin;
 use prelude::*;
 
+use camera::FirstPersonCameraPlugin;
 use clap::{ArgAction, Parser};
+use input::GameInputPlugin;
 
 pub fn create_app(info: GameInfo) -> App {
     let mut app = App::new();
@@ -28,6 +33,7 @@ pub fn create_app(info: GameInfo) -> App {
         }),
         PhysicsPlugins::default(),
     ));
+    app.add_plugins((PlayerPlugin, GameInputPlugin, FirstPersonCameraPlugin));
 
     let args = EngineArgs::parse();
     if args.show_game_info_overlay {
