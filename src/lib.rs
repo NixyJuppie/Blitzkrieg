@@ -2,15 +2,15 @@
 #![allow(clippy::too_many_arguments)]
 
 pub mod camera;
+pub mod character;
 pub mod input;
 pub mod player;
+pub mod weapon;
 
 pub mod prelude {
     pub use bevy::ecs as bevy_ecs;
     pub use bevy::prelude::*;
-
-    pub use avian3d as physics;
-    pub use physics::prelude::*;
+    pub use derive_more::derive::Constructor;
 }
 use player::PlayerPlugin;
 use prelude::*;
@@ -23,16 +23,13 @@ pub fn create_app(info: GameInfo) -> App {
     let mut app = App::new();
 
     app.insert_resource(info);
-    app.add_plugins((
-        DefaultPlugins.set(bevy::window::WindowPlugin {
-            primary_window: Some(Window {
-                title: info.name.to_string(),
-                ..default()
-            }),
+    app.add_plugins((DefaultPlugins.set(bevy::window::WindowPlugin {
+        primary_window: Some(Window {
+            title: info.name.to_string(),
             ..default()
         }),
-        PhysicsPlugins::default(),
-    ));
+        ..default()
+    }),));
     app.add_plugins((PlayerPlugin, GameInputPlugin, FirstPersonCameraPlugin));
 
     let args = EngineArgs::parse();
@@ -40,7 +37,7 @@ pub fn create_app(info: GameInfo) -> App {
         app.add_systems(Startup, spawn_info_overlay);
     }
     if args.enable_debug_renderer {
-        app.add_plugins(PhysicsDebugPlugin::default());
+        // TODO
     }
 
     app

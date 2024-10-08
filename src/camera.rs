@@ -10,18 +10,20 @@ impl Plugin for FirstPersonCameraPlugin {
     }
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Debug)]
+#[require(Transform, Camera3d)]
 pub struct FirstPersonCamera;
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Debug, Constructor)]
+#[require(Transform)]
 pub struct FirstPersonCameraTarget {
     pub height: f32,
 }
 
 fn setup_cursor(mut window: Query<&mut Window, With<PrimaryWindow>>) {
     let mut window = window.single_mut();
-    window.cursor.visible = false;
-    window.cursor.grab_mode = CursorGrabMode::Confined;
+    window.cursor_options.visible = false;
+    window.cursor_options.grab_mode = CursorGrabMode::Confined;
 }
 
 const PITCH_SENSITIVITY: f32 = 0.2;
