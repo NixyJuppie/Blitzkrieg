@@ -4,6 +4,6 @@ version = "0.1.0-dev"
 edition = "2021"
 
 [dependencies]
-avian3d = "0.1"
-bevy = { version = "0.14", features = ["wayland"] }
+bevy = { git = "https://github.com/bevyengine/bevy", features = ["wayland"] }
 clap = { version = "4.5", features = ["derive"] }
+derive_more = { version = "1.0.0", features = ["constructor"] }
