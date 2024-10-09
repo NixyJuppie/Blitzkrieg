@@ -1,4 +1,8 @@
 use crate::prelude::*;
 
 #[derive(Component, Default, Debug)]
-pub struct Weapon;
+pub enum WeaponState {
+    #[default]
+    Idle,
+    Active,
+}

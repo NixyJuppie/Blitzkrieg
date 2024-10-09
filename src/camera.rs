@@ -1,4 +1,4 @@
-use bevy::window::{CursorGrabMode, PrimaryWindow};
+use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
 use crate::{input::GameplayInput, prelude::*};
 
@@ -6,7 +6,10 @@ pub struct FirstPersonCameraPlugin;
 impl Plugin for FirstPersonCameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup_cursor);
-        app.add_systems(Update, (rotate_camera, move_camera));
+        app.add_systems(
+            Update,
+            (handle_cursor_grab_mode, rotate_camera, move_camera),
+        );
     }
 }
 
@@ -21,9 +24,37 @@ pub struct FirstPersonCameraTarget {
 }
 
 fn setup_cursor(mut window: Query<&mut Window, With<PrimaryWindow>>) {
+    lock_cursor(&mut window.single_mut().cursor_options);
+}
+
+fn handle_cursor_grab_mode(
+    mut window: Query<&mut Window, With<PrimaryWindow>>,
+    input: Res<GameplayInput>,
+) {
+    if !input.switch_cursor_mode {
+        return;
+    }
+
     let mut window = window.single_mut();
-    window.cursor_options.visible = false;
-    window.cursor_options.grab_mode = CursorGrabMode::Confined;
+    if is_cursor_unlocked(&window.cursor_options) {
+        lock_cursor(&mut window.cursor_options);
+    } else {
+        unlock_cursor(&mut window.cursor_options);
+    }
+}
+
+fn is_cursor_unlocked(cursor: &CursorOptions) -> bool {
+    cursor.grab_mode == CursorGrabMode::None
+}
+
+fn lock_cursor(cursor: &mut CursorOptions) {
+    cursor.visible = false;
+    cursor.grab_mode = CursorGrabMode::Confined;
+}
+
+fn unlock_cursor(cursor: &mut CursorOptions) {
+    cursor.visible = true;
+    cursor.grab_mode = CursorGrabMode::None;
 }
 
 const PITCH_SENSITIVITY: f32 = 0.2;
@@ -33,8 +64,13 @@ const MAX_PITCH_DEGREES: f32 = 45.0;
 fn rotate_camera(
     mut camera: Query<&mut Transform, (With<FirstPersonCamera>, Without<FirstPersonCameraTarget>)>,
     target: Query<&Transform, (With<FirstPersonCameraTarget>, Without<FirstPersonCamera>)>,
+    window: Query<&Window, With<PrimaryWindow>>,
     input: Res<GameplayInput>,
 ) {
+    if is_cursor_unlocked(&window.single().cursor_options) {
+        return;
+    }
+
     let Ok(mut camera) = camera.get_single_mut() else {
         return;
     };
@@ -57,8 +93,13 @@ fn rotate_camera(
 
 fn move_camera(
     mut camera: Query<&mut Transform, (With<FirstPersonCamera>, Without<FirstPersonCameraTarget>)>,
+    window: Query<&Window, With<PrimaryWindow>>,
     target: Query<(&Transform, &FirstPersonCameraTarget), Without<FirstPersonCamera>>,
 ) {
+    if is_cursor_unlocked(&window.single().cursor_options) {
+        return;
+    }
+
     let Ok(mut camera) = camera.get_single_mut() else {
         return;
     };

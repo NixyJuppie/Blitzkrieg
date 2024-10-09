@@ -15,13 +15,16 @@ pub struct GameplayInput {
     pub yaw: f32,
     pub pitch: f32,
     pub movement: Vec2,
+    pub use_weapon: bool,
     pub select_weapon: Option<u8>,
+    pub switch_cursor_mode: bool,
 }
 
 fn update_gameplay_input(
     mut input: ResMut<GameplayInput>,
     mut motion: EventReader<MouseMotion>,
     keys: Res<ButtonInput<KeyCode>>,
+    mouse_keys: Res<ButtonInput<MouseButton>>,
 ) {
     let motion = motion.read().fold(Vec2::ZERO, |a, e| a + e.delta.xy());
     input.yaw = motion.x;
@@ -35,6 +38,7 @@ fn update_gameplay_input(
         KeyCode::KeyD,
     );
 
+    input.use_weapon = mouse_keys.pressed(MouseButton::Left);
     input.select_weapon = if keys.pressed(KeyCode::Digit1) {
         Some(0)
     } else if keys.pressed(KeyCode::Digit2) {
@@ -57,7 +61,9 @@ fn update_gameplay_input(
         Some(9)
     } else {
         None
-    }
+    };
+
+    input.switch_cursor_mode = keys.just_released(KeyCode::Escape);
 }
 
 fn read_vec2(

@@ -3,6 +3,7 @@
 
 pub mod camera;
 pub mod character;
+pub mod debug_ui;
 pub mod input;
 pub mod player;
 pub mod weapon;
@@ -12,6 +13,7 @@ pub mod prelude {
     pub use bevy::prelude::*;
     pub use derive_more::derive::Constructor;
 }
+use debug_ui::DebugUiPlugin;
 use player::PlayerPlugin;
 use prelude::*;
 
@@ -36,8 +38,8 @@ pub fn create_app(info: GameInfo) -> App {
     if args.show_game_info_overlay {
         app.add_systems(Startup, spawn_info_overlay);
     }
-    if args.enable_debug_renderer {
-        // TODO
+    if args.enable_debug_ui {
+        app.add_plugins(DebugUiPlugin);
     }
 
     app
@@ -80,6 +82,6 @@ struct EngineArgs {
         default_value_t = true,
     )]
     pub show_game_info_overlay: bool,
-    #[arg(short = 'd', long = "debug-renderer", help = "Enable debug renderer")]
-    pub enable_debug_renderer: bool,
+    #[arg(short = 'u', long = "debug-ui", help = "Enable debug UI")]
+    pub enable_debug_ui: bool,
 }
