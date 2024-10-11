@@ -63,18 +63,15 @@ fn spawn_info_overlay(mut commands: Commands, info: Res<GameInfo>) {
         .map_or(info.name.to_string(), |v| format!("{} {}", info.name, v));
     let engine_info = format!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
-    commands.spawn(
-        TextBundle::from_section(
-            format!("{} ({})", game_info, engine_info),
-            TextStyle::default(),
-        )
-        .with_style(Style {
+    commands.spawn((
+        Text(format!("{} ({})", game_info, engine_info)),
+        Style {
             position_type: PositionType::Absolute,
             bottom: Val::Px(4.0),
             right: Val::Px(4.0),
             ..default()
-        }),
-    );
+        },
+    ));
 }
 
 #[derive(Parser)]
