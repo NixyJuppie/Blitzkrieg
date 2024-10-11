@@ -1,13 +1,10 @@
-use blitzkrieg::{
-    camera::{FirstPersonCamera, FirstPersonCameraTarget},
-    create_app,
-    player::Player,
-    prelude::*,
-    GameInfo,
-};
+use blitzkrieg::camera::{FirstPersonCamera, FirstPersonCameraTarget};
+use blitzkrieg::player::Player;
+use blitzkrieg::prelude::*;
+use blitzkrieg::{create_default_app, GameInfo};
 
 fn main() {
-    let mut app = create_app(GameInfo {
+    let mut app = create_default_app(GameInfo {
         name: "Basic",
         version: None,
     });

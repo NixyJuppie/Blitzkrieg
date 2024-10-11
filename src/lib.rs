@@ -13,15 +13,16 @@ pub mod prelude {
     pub use bevy::prelude::*;
     pub use derive_more::derive::Constructor;
 }
-use debug_ui::DebugUiPlugin;
-use player::PlayerPlugin;
-use prelude::*;
 
 use camera::FirstPersonCameraPlugin;
 use clap::{ArgAction, Parser};
+use debug_ui::DebugUiPlugin;
 use input::GameInputPlugin;
+use player::PlayerPlugin;
+use prelude::*;
+use weapon::WeaponPlugin;
 
-pub fn create_app(info: GameInfo) -> App {
+pub fn create_default_app(info: GameInfo) -> App {
     let mut app = App::new();
 
     app.insert_resource(info);
@@ -32,7 +33,12 @@ pub fn create_app(info: GameInfo) -> App {
         }),
         ..default()
     }),));
-    app.add_plugins((PlayerPlugin, GameInputPlugin, FirstPersonCameraPlugin));
+    app.add_plugins((
+        PlayerPlugin,
+        GameInputPlugin,
+        FirstPersonCameraPlugin,
+        WeaponPlugin,
+    ));
 
     let args = EngineArgs::parse();
     if args.show_game_info_overlay {

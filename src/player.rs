@@ -1,4 +1,7 @@
-use crate::{character::EquippedWeapons, input::GameplayInput, prelude::*, weapon::WeaponState};
+use crate::character::EquippedWeapons;
+use crate::input::GameplayInput;
+use crate::prelude::*;
+use crate::weapon::WeaponState;
 
 pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {

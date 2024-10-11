@@ -1,6 +1,7 @@
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 
-use crate::{input::GameplayInput, prelude::*};
+use crate::input::GameplayInput;
+use crate::prelude::*;
 
 pub struct FirstPersonCameraPlugin;
 impl Plugin for FirstPersonCameraPlugin {
