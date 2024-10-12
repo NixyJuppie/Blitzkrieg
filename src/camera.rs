@@ -24,19 +24,18 @@ pub struct FirstPersonCameraTarget {
     pub height: f32,
 }
 
-fn setup_cursor(mut window: Query<&mut Window, With<PrimaryWindow>>) {
-    lock_cursor(&mut window.single_mut().cursor_options);
+fn setup_cursor(mut window: Single<&mut Window, With<PrimaryWindow>>) {
+    lock_cursor(&mut window.cursor_options);
 }
 
 fn handle_cursor_grab_mode(
-    mut window: Query<&mut Window, With<PrimaryWindow>>,
+    mut window: Single<&mut Window, With<PrimaryWindow>>,
     input: Res<GameplayInput>,
 ) {
     if !input.switch_cursor_mode {
         return;
     }
 
-    let mut window = window.single_mut();
     if is_cursor_unlocked(&window.cursor_options) {
         lock_cursor(&mut window.cursor_options);
     } else {
@@ -63,21 +62,14 @@ const MIN_PITCH_DEGREES: f32 = -45.0;
 const MAX_PITCH_DEGREES: f32 = 45.0;
 
 fn rotate_camera(
-    mut camera: Query<&mut Transform, (With<FirstPersonCamera>, Without<FirstPersonCameraTarget>)>,
-    target: Query<&Transform, (With<FirstPersonCameraTarget>, Without<FirstPersonCamera>)>,
-    window: Query<&Window, With<PrimaryWindow>>,
+    mut camera: Single<&mut Transform, (With<FirstPersonCamera>, Without<FirstPersonCameraTarget>)>,
+    target: Single<&Transform, (With<FirstPersonCameraTarget>, Without<FirstPersonCamera>)>,
+    window: Single<&Window, With<PrimaryWindow>>,
     input: Res<GameplayInput>,
 ) {
-    if is_cursor_unlocked(&window.single().cursor_options) {
+    if is_cursor_unlocked(&window.cursor_options) {
         return;
     }
-
-    let Ok(mut camera) = camera.get_single_mut() else {
-        return;
-    };
-    let Ok(target) = target.get_single() else {
-        return;
-    };
 
     let (_, pitch, _) = camera.rotation.to_euler(EulerRot::YXZ);
     let (yaw, _, roll) = target.rotation.to_euler(EulerRot::YXZ);
@@ -93,20 +85,14 @@ fn rotate_camera(
 }
 
 fn move_camera(
-    mut camera: Query<&mut Transform, (With<FirstPersonCamera>, Without<FirstPersonCameraTarget>)>,
-    window: Query<&Window, With<PrimaryWindow>>,
-    target: Query<(&Transform, &FirstPersonCameraTarget), Without<FirstPersonCamera>>,
+    mut camera: Single<&mut Transform, (With<FirstPersonCamera>, Without<FirstPersonCameraTarget>)>,
+    window: Single<&Window, With<PrimaryWindow>>,
+    target: Single<(&Transform, &FirstPersonCameraTarget), Without<FirstPersonCamera>>,
 ) {
-    if is_cursor_unlocked(&window.single().cursor_options) {
+    if is_cursor_unlocked(&window.cursor_options) {
         return;
     }
 
-    let Ok(mut camera) = camera.get_single_mut() else {
-        return;
-    };
-    let Ok((target, FirstPersonCameraTarget { height })) = target.get_single() else {
-        return;
-    };
-
+    let (target, FirstPersonCameraTarget { height }) = *target;
     camera.translation = target.translation + Vec3::new(0.0, *height, 0.0);
 }

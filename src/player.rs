@@ -19,11 +19,7 @@ pub struct Player;
 
 const YAW_SENSITIVITY: f32 = 0.2;
 
-fn rotate_player(mut player: Query<&mut Transform, With<Player>>, input: Res<GameplayInput>) {
-    let Ok(mut player) = player.get_single_mut() else {
-        return;
-    };
-
+fn rotate_player(mut player: Single<&mut Transform, With<Player>>, input: Res<GameplayInput>) {
     let (yaw, pitch, roll) = player.rotation.to_euler(EulerRot::YXZ);
     player.rotation = Quat::from_euler(
         EulerRot::YXZ,
@@ -36,14 +32,10 @@ fn rotate_player(mut player: Query<&mut Transform, With<Player>>, input: Res<Gam
 const MOVEMENT_SPEED: f32 = 15.0;
 
 fn move_player(
-    mut player: Query<&mut Transform, With<Player>>,
+    mut player: Single<&mut Transform, With<Player>>,
     input: Res<GameplayInput>,
     time: Res<Time>,
 ) {
-    let Ok(mut player) = player.get_single_mut() else {
-        return;
-    };
-
     let direction = (input.movement.y * player.forward() + input.movement.x * player.right())
         .with_y(0.0)
         .normalize_or_zero();
@@ -53,11 +45,11 @@ fn move_player(
 }
 
 fn use_weapon(
-    player: Query<&EquippedWeapons, With<Player>>,
+    player: Single<&EquippedWeapons, With<Player>>,
     mut weapons: Query<&mut WeaponState>,
     input: Res<GameplayInput>,
 ) {
-    let Some(current_weapon) = player.get_single().ok().and_then(|w| w.current_slot()) else {
+    let Some(current_weapon) = player.current_slot() else {
         return;
     };
 
@@ -72,14 +64,13 @@ fn use_weapon(
     };
 }
 
-fn select_weapon(mut player: Query<&mut EquippedWeapons, With<Player>>, input: Res<GameplayInput>) {
+fn select_weapon(
+    mut player: Single<&mut EquippedWeapons, With<Player>>,
+    input: Res<GameplayInput>,
+) {
     let Some(index) = input.select_weapon else {
         return;
     };
 
-    let Ok(mut weapons) = player.get_single_mut() else {
-        return;
-    };
-
-    weapons.switch(index as usize);
+    player.switch(index as usize);
 }
