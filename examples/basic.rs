@@ -1,6 +1,8 @@
 use blitzkrieg::camera::{FirstPersonCamera, FirstPersonCameraTarget};
+use blitzkrieg::character::EquippedWeapons;
 use blitzkrieg::player::Player;
 use blitzkrieg::prelude::*;
+use blitzkrieg::weapon::gun::GunState;
 use blitzkrieg::{create_default_app, GameInfo};
 
 fn main() {
@@ -28,12 +30,15 @@ fn setup(
     let gold = materials.add(Color::linear_rgb(1.0, 0.8, 0.0));
     let red = materials.add(Color::linear_rgb(1.0, 0.0, 0.0));
 
+    let weapon = commands.spawn(GunState::Idle).id();
     commands.spawn((
         Player,
         FirstPersonCameraTarget::new(1.5),
         Mesh3d(capsule.clone()),
         MeshMaterial3d(gold.clone()),
+        EquippedWeapons::new(&[Some(weapon), None]),
     ));
+
     for x in -1..=1 {
         commands.spawn((
             Mesh3d(capsule.clone()),

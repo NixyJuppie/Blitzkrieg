@@ -11,12 +11,18 @@ pub struct EquippedWeapons {
 }
 
 impl EquippedWeapons {
-    pub fn new(size: usize) -> Self {
-        assert!(size > 0 && size <= CAPACITY);
+    pub fn new(slots: &[WeaponSlot]) -> Self {
+        assert!(slots.len() <= CAPACITY);
+
+        let mut result_slots = [None; CAPACITY];
+        for (index, slot) in slots.iter().enumerate() {
+            result_slots[index] = *slot;
+        }
+
         Self {
-            slots: [None; CAPACITY],
+            slots: result_slots,
             current: 0,
-            size,
+            size: result_slots.len(),
         }
     }
 
@@ -55,6 +61,6 @@ impl EquippedWeapons {
 
 impl Default for EquippedWeapons {
     fn default() -> Self {
-        Self::new(CAPACITY)
+        Self::new(&[None; CAPACITY])
     }
 }

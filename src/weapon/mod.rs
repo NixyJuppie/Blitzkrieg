@@ -13,6 +13,8 @@ impl Plugin for WeaponPlugin {
     }
 }
 
+/// General state of weapon/tool, the thing in hands.
+/// Maybe ToolState would be a better name?
 #[derive(Component, Default, Debug)]
 pub enum WeaponState {
     #[default]
