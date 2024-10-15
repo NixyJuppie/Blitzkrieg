@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 const CAPACITY: usize = 10;
-type WeaponSlot = Option<Entity>;
+pub type WeaponSlot = Option<Entity>;
 
 #[derive(Component, Debug)]
 pub struct EquippedWeapons {
@@ -22,7 +22,7 @@ impl EquippedWeapons {
         Self {
             slots: result_slots,
             current: 0,
-            size: result_slots.len(),
+            size: slots.len(),
         }
     }
 

@@ -1,8 +1,10 @@
 use blitzkrieg::camera::{FirstPersonCamera, FirstPersonCameraTarget};
-use blitzkrieg::character::EquippedWeapons;
+use blitzkrieg::character::{EquippedWeapons, WeaponSlot};
 use blitzkrieg::player::Player;
 use blitzkrieg::prelude::*;
-use blitzkrieg::weapon::gun::{AttachedGunAmmunitionStorage, GunAmmunitionStorage, GunState};
+use blitzkrieg::weapon::gun::{
+    AmmunitionStorage, AttachedAmmunitionStorage, FiringMechanism, GunState, LoadingMechanism,
+};
 use blitzkrieg::{create_default_app, GameInfo};
 
 fn main() {
@@ -30,21 +32,13 @@ fn setup(
     let gold = materials.add(Color::linear_rgb(1.0, 0.8, 0.0));
     let red = materials.add(Color::linear_rgb(1.0, 0.0, 0.0));
 
-    let weapon = commands
-        .spawn((
-            GunState::Empty,
-            AttachedGunAmmunitionStorage(GunAmmunitionStorage {
-                amount: 10,
-                ..default()
-            }),
-        ))
-        .id();
+    let weapons = spawn_weapons(&mut commands);
     commands.spawn((
         Player,
         FirstPersonCameraTarget::new(1.5),
         Mesh3d(capsule.clone()),
         MeshMaterial3d(gold.clone()),
-        EquippedWeapons::new(&[Some(weapon), None]),
+        EquippedWeapons::new(&weapons),
     ));
 
     for x in -1..=1 {
@@ -54,4 +48,69 @@ fn setup(
             Transform::from_xyz(x as f32 * 2.5, 0.0, -10.0),
         ));
     }
+}
+
+fn spawn_weapons(commands: &mut Commands) -> [WeaponSlot; 3] {
+    [
+        // Manual loading and firing - Mosin-Nagant
+        Some(
+            commands
+                .spawn((
+                    GunState::Empty,
+                    AttachedAmmunitionStorage(Some(AmmunitionStorage {
+                        amount: 10,
+                        ..default()
+                    })),
+                    LoadingMechanism {
+                        automatic: false,
+                        duration: 0.1,
+                    },
+                    FiringMechanism {
+                        automatic: false,
+                        duration: 0.1,
+                    },
+                ))
+                .id(),
+        ),
+        // Automatic loading with manual firing - M1 Garand
+        Some(
+            commands
+                .spawn((
+                    GunState::Empty,
+                    AttachedAmmunitionStorage(Some(AmmunitionStorage {
+                        amount: 10,
+                        ..default()
+                    })),
+                    LoadingMechanism {
+                        automatic: true,
+                        duration: 0.1,
+                    },
+                    FiringMechanism {
+                        automatic: false,
+                        duration: 0.1,
+                    },
+                ))
+                .id(),
+        ),
+        // Automatic loading and firing - MP40
+        Some(
+            commands
+                .spawn((
+                    GunState::Empty,
+                    AttachedAmmunitionStorage(Some(AmmunitionStorage {
+                        amount: 20,
+                        ..default()
+                    })),
+                    LoadingMechanism {
+                        automatic: true,
+                        duration: 0.1,
+                    },
+                    FiringMechanism {
+                        automatic: true,
+                        duration: 0.1,
+                    },
+                ))
+                .id(),
+        ),
+    ]
 }

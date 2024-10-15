@@ -57,11 +57,7 @@ fn use_weapon(
         unreachable!("Equipped weapon {current_weapon} is not a weapon or does not exist!");
     };
 
-    *state = if input.use_weapon {
-        WeaponState::Active
-    } else {
-        WeaponState::Idle
-    };
+    *state = state.next(input.use_weapon);
 }
 
 fn select_weapon(

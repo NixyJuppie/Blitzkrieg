@@ -9,73 +9,59 @@ impl Plugin for GunPlugin {
 }
 
 #[derive(Component, Default, Debug)]
-pub struct GunLoadingMechanism {
+pub struct LoadingMechanism {
     pub automatic: bool,
     pub duration: f32,
 }
 
 #[derive(Component, Default, Debug)]
-pub struct GunFiringMechanism {
-    pub ready: bool,
-    // pub automatic: bool,
-    // pub duration: f32,
+pub struct FiringMechanism {
+    pub automatic: bool,
+    pub duration: f32,
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct GunAmmunition {
-    // TODO
+pub struct Ammunition {
+    pub bullet: (), // TODO
+    pub casing: (), // TODO
 }
 
 #[derive(Default, Debug)]
-pub struct GunAmmunitionStorage {
-    pub ammunition: GunAmmunition,
+pub struct AmmunitionStorage {
+    pub ammunition: Ammunition,
     pub amount: u8,
 }
 
 #[derive(Component, Default, Debug)]
-pub struct AttachedGunAmmunitionStorage(pub GunAmmunitionStorage);
+pub struct AttachedAmmunitionStorage(pub Option<AmmunitionStorage>);
 
 #[derive(Component, Default, Debug)]
 #[require(
     WeaponState,
-    GunLoadingMechanism,
-    GunFiringMechanism,
-    AttachedGunAmmunitionStorage
+    LoadingMechanism,
+    FiringMechanism,
+    AttachedAmmunitionStorage
 )]
 pub enum GunState {
     #[default]
     Empty,
     Loading {
-        ammunition: GunAmmunition,
+        ammunition: Ammunition,
         timer: Timer,
     },
-    Ready,
-    Firing,
-}
-
-fn update_mechanism_state(
-    mut weapons: Query<(
-        &mut GunLoadingMechanism,
-        &mut GunFiringMechanism,
-        &WeaponState,
-    )>,
-) {
-    // for (mut loading, mut firing, state) in weapons.iter_mut() {
-    //     match state {
-    //         WeaponState::Idle => {
-    //             firing.ready = true;
-    //         }
-    //         WeaponState::Active => todo!(),
-    //     }
-    // }
+    Ready(Ammunition),
+    Firing {
+        ammunition: Ammunition,
+        timer: Timer,
+    },
 }
 
 fn update_state(
     mut weapons: Query<(
         &mut GunState,
-        &mut AttachedGunAmmunitionStorage,
-        &GunLoadingMechanism,
-        &GunFiringMechanism,
+        &mut AttachedAmmunitionStorage,
+        &LoadingMechanism,
+        &FiringMechanism,
         &WeaponState,
     )>,
     time: Res<Time>,
@@ -83,32 +69,49 @@ fn update_state(
     for (mut gun, mut ammunition_storage, loading, firing, weapon) in weapons.iter_mut() {
         match gun.as_mut() {
             GunState::Empty => {
-                if ammunition_storage.0.amount == 0 {
+                let Some(ref mut ammunition_storage) = ammunition_storage.0 else {
                     continue;
+                };
+                if ammunition_storage.amount == 0 {
+                    todo!("No ammo");
                 }
-                println!("{gun:?} {weapon:?} {loading:?}");
 
                 if *weapon == WeaponState::JustActivated
                     || (loading.automatic && *weapon == WeaponState::Active)
                 {
-                    ammunition_storage.0.amount -= 1;
+                    ammunition_storage.amount -= 1;
+                    info!("Loading {:?}", ammunition_storage.ammunition);
                     *gun = GunState::Loading {
-                        ammunition: ammunition_storage.0.ammunition.clone(),
+                        ammunition: ammunition_storage.ammunition.clone(),
                         timer: Timer::from_seconds(loading.duration, TimerMode::Once),
                     };
                 }
             }
-            GunState::Loading {
-                ammunition,
-                ref mut timer,
-            } => {
+            GunState::Loading { ammunition, timer } => {
                 timer.tick(time.delta());
                 if timer.finished() {
-                    *gun = GunState::Ready
+                    info!("Ready {ammunition:?}");
+                    *gun = GunState::Ready(ammunition.clone());
                 }
             }
-            GunState::Ready => *gun = GunState::Empty,
-            GunState::Firing => *gun = GunState::Empty,
+            GunState::Ready(ammunition) => {
+                if *weapon == WeaponState::JustActivated
+                    || (firing.automatic && *weapon == WeaponState::Active)
+                {
+                    info!("Firing {ammunition:?}");
+                    *gun = GunState::Firing {
+                        ammunition: ammunition.clone(),
+                        timer: Timer::from_seconds(firing.duration, TimerMode::Once),
+                    };
+                }
+            }
+            GunState::Firing { ammunition, timer } => {
+                timer.tick(time.delta());
+                if timer.finished() {
+                    info!("Fired {ammunition:?}");
+                    *gun = GunState::Empty;
+                }
+            }
         };
     }
 }

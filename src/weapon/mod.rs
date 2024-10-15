@@ -1,4 +1,3 @@
-use crate::input::GameplayInput;
 use crate::prelude::*;
 
 pub mod gun;
@@ -11,8 +10,6 @@ impl Plugin for WeaponPlugin {
         if !app.is_plugin_added::<GunPlugin>() {
             app.add_plugins(GunPlugin);
         }
-
-        app.add_systems(Update, update_weapon_state);
     }
 }
 
@@ -26,14 +23,13 @@ pub enum WeaponState {
     Active,
 }
 
-fn update_weapon_state(mut weapons: Query<&mut WeaponState>, input: Res<GameplayInput>) {
-    for mut state in weapons.iter_mut() {
-        *state = match (state.clone(), input.use_weapon) {
-            (WeaponState::Idle, true) => WeaponState::JustActivated,
-            (_, true) => WeaponState::Active,
-            (_, false) => WeaponState::Idle,
-        };
-
-        println!("NEW STATE: {state:?}");
+impl WeaponState {
+    pub fn next(&self, input: bool) -> Self {
+        match (self, input) {
+            (_, false) => Self::Idle,
+            (Self::Idle, true) => Self::JustActivated,
+            (Self::JustActivated, true) => Self::Active,
+            (Self::Active, true) => Self::Active,
+        }
     }
 }
