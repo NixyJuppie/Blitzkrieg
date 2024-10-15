@@ -1,4 +1,5 @@
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
+use derive_more::derive::Constructor;
 
 use crate::input::GameplayInput;
 use crate::prelude::*;

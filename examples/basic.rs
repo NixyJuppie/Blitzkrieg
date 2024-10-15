@@ -2,7 +2,7 @@ use blitzkrieg::camera::{FirstPersonCamera, FirstPersonCameraTarget};
 use blitzkrieg::character::EquippedWeapons;
 use blitzkrieg::player::Player;
 use blitzkrieg::prelude::*;
-use blitzkrieg::weapon::gun::GunState;
+use blitzkrieg::weapon::gun::{AttachedGunAmmunitionStorage, GunAmmunitionStorage, GunState};
 use blitzkrieg::{create_default_app, GameInfo};
 
 fn main() {
@@ -30,7 +30,15 @@ fn setup(
     let gold = materials.add(Color::linear_rgb(1.0, 0.8, 0.0));
     let red = materials.add(Color::linear_rgb(1.0, 0.0, 0.0));
 
-    let weapon = commands.spawn(GunState::Idle).id();
+    let weapon = commands
+        .spawn((
+            GunState::Empty,
+            AttachedGunAmmunitionStorage(GunAmmunitionStorage {
+                amount: 10,
+                ..default()
+            }),
+        ))
+        .id();
     commands.spawn((
         Player,
         FirstPersonCameraTarget::new(1.5),

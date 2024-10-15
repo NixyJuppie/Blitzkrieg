@@ -11,7 +11,6 @@ pub mod weapon;
 pub mod prelude {
     pub use bevy::ecs as bevy_ecs;
     pub use bevy::prelude::*;
-    pub use derive_more::derive::Constructor;
 }
 
 use camera::FirstPersonCameraPlugin;
