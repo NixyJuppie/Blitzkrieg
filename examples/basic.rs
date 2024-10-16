@@ -1,13 +1,15 @@
-use blitzkrieg::{
-    camera::{FirstPersonCamera, FirstPersonCameraTarget},
-    create_app,
-    player::Player,
-    prelude::*,
-    GameInfo,
+use blitzkrieg::camera::{FirstPersonCamera, FirstPersonCameraTarget};
+use blitzkrieg::character::{EquippedWeapons, WeaponSlot};
+use blitzkrieg::player::Player;
+use blitzkrieg::prelude::*;
+use blitzkrieg::weapon::gun::{
+    Ammunition, AmmunitionStorage, AttachedAmmunitionStorage, FiringMechanism, GunState,
+    LoadingMechanism, ProjectileDefinition,
 };
+use blitzkrieg::{create_default_app, GameInfo};
 
 fn main() {
-    let mut app = create_app(GameInfo {
+    let mut app = create_default_app(GameInfo {
         name: "Basic",
         version: None,
     });
@@ -21,54 +23,112 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    commands.spawn(FirstPersonCamera);
     commands.spawn((
-        Player,
-        FirstPersonCameraTarget { height: 0.75 },
-        TransformBundle::default(),
-        RigidBody::Dynamic,
-        Collider::cuboid(1.0, 1.0, 1.0),
-        LinearVelocity::default(),
-        LockedAxes::ROTATION_LOCKED,
-    ));
-    commands.spawn((Camera3dBundle::default(), FirstPersonCamera));
-    commands.spawn(DirectionalLightBundle {
-        transform: Transform::from_xyz(0.5, 1.0, -0.25).looking_at(Vec3::ZERO, Vec3::Y),
-        directional_light: DirectionalLight {
-            shadows_enabled: true,
-            ..default()
-        },
-        ..default()
-    });
-
-    commands.spawn((
-        PbrBundle {
-            transform: Transform::from_xyz(0.0, -5.0, 0.0),
-            mesh: meshes.add(Cuboid::new(100.0, 0.1, 100.0)),
-            material: materials.add(Color::srgb_u8(0, 64, 0)),
-            ..default()
-        },
-        Collider::cuboid(100.0, 0.1, 100.0),
-        RigidBody::Static,
+        DirectionalLight::default(),
+        Transform::default().looking_at(Vec3::new(0.3, -1.0, -0.5), Vec3::Y),
     ));
 
-    commands.spawn((
-        PbrBundle {
-            transform: Transform::from_xyz(10.0, 2.5, -20.0),
-            mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-            material: materials.add(Color::srgb_u8(255, 0, 0)),
-            ..default()
+    let capsule = meshes.add(Capsule3d::new(1.0, 1.75));
+    let gold = materials.add(Color::linear_rgb(1.0, 0.8, 0.0));
+    let red = materials.add(Color::linear_rgb(1.0, 0.0, 0.0));
+
+    let weapons = spawn_weapons(&mut commands, &mut meshes, &mut materials);
+    commands
+        .spawn((
+            Player,
+            FirstPersonCameraTarget::new(1.5),
+            Mesh3d(capsule.clone()),
+            MeshMaterial3d(gold.clone()),
+            EquippedWeapons::new(&weapons),
+        ))
+        .add_children(&weapons.iter().filter_map(|w| *w).collect::<Vec<Entity>>()[..]);
+
+    for x in -1..=1 {
+        commands.spawn((
+            Mesh3d(capsule.clone()),
+            MeshMaterial3d(red.clone()),
+            Transform::from_xyz(x as f32 * 2.5, 0.0, -10.0),
+        ));
+    }
+}
+
+fn spawn_weapons(
+    commands: &mut Commands,
+    meshes: &mut Assets<Mesh>,
+    materials: &mut Assets<StandardMaterial>,
+) -> [WeaponSlot; 3] {
+    let ammunition = Ammunition {
+        bullet: ProjectileDefinition {
+            mesh: meshes.add(Capsule3d::new(0.01, 0.01)),
+            material: materials.add(Color::linear_rgb(1.0, 0.9, 0.0)),
         },
-        Collider::cuboid(1.0, 1.0, 1.0),
-        RigidBody::Dynamic,
-    ));
-    commands.spawn((
-        PbrBundle {
-            transform: Transform::from_xyz(-10.0, 2.5, -30.0),
-            mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-            material: materials.add(Color::srgb_u8(255, 0, 0)),
-            ..default()
-        },
-        Collider::cuboid(1.0, 1.0, 1.0),
-        RigidBody::Dynamic,
-    ));
+        casing: Some(ProjectileDefinition {
+            mesh: meshes.add(Capsule3d::new(0.02, 0.02)),
+            material: materials.add(Color::linear_rgb(0.7, 0.7, 0.7)),
+        }),
+    };
+
+    [
+        // Manual loading and firing - Mosin-Nagant
+        Some(
+            commands
+                .spawn((
+                    GunState::Empty,
+                    AttachedAmmunitionStorage(Some(AmmunitionStorage {
+                        amount: 10,
+                        ammunition: ammunition.clone(),
+                    })),
+                    LoadingMechanism {
+                        automatic: false,
+                        duration: 0.1,
+                    },
+                    FiringMechanism {
+                        automatic: false,
+                        duration: 0.1,
+                    },
+                ))
+                .id(),
+        ),
+        // Automatic loading with manual firing - M1 Garand
+        Some(
+            commands
+                .spawn((
+                    GunState::Empty,
+                    AttachedAmmunitionStorage(Some(AmmunitionStorage {
+                        amount: 10,
+                        ammunition: ammunition.clone(),
+                    })),
+                    LoadingMechanism {
+                        automatic: true,
+                        duration: 0.1,
+                    },
+                    FiringMechanism {
+                        automatic: false,
+                        duration: 0.1,
+                    },
+                ))
+                .id(),
+        ),
+        // Automatic loading and firing - MP40
+        Some(
+            commands
+                .spawn((
+                    GunState::Empty,
+                    AttachedAmmunitionStorage(Some(AmmunitionStorage {
+                        amount: 20,
+                        ammunition: ammunition.clone(),
+                    })),
+                    LoadingMechanism {
+                        automatic: true,
+                        duration: 0.1,
+                    },
+                    FiringMechanism {
+                        automatic: true,
+                        duration: 0.1,
+                    },
+                ))
+                .id(),
+        ),
+    ]
 }

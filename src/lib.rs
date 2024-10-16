@@ -2,45 +2,49 @@
 #![allow(clippy::too_many_arguments)]
 
 pub mod camera;
+pub mod character;
+pub mod debug_ui;
 pub mod input;
 pub mod player;
+pub mod weapon;
 
 pub mod prelude {
     pub use bevy::ecs as bevy_ecs;
     pub use bevy::prelude::*;
-
-    pub use avian3d as physics;
-    pub use physics::prelude::*;
 }
-use player::PlayerPlugin;
-use prelude::*;
 
 use camera::FirstPersonCameraPlugin;
 use clap::{ArgAction, Parser};
+use debug_ui::DebugUiPlugin;
 use input::GameInputPlugin;
+use player::PlayerPlugin;
+use prelude::*;
+use weapon::WeaponPlugin;
 
-pub fn create_app(info: GameInfo) -> App {
+pub fn create_default_app(info: GameInfo) -> App {
     let mut app = App::new();
 
     app.insert_resource(info);
-    app.add_plugins((
-        DefaultPlugins.set(bevy::window::WindowPlugin {
-            primary_window: Some(Window {
-                title: info.name.to_string(),
-                ..default()
-            }),
+    app.add_plugins((DefaultPlugins.set(bevy::window::WindowPlugin {
+        primary_window: Some(Window {
+            title: info.name.to_string(),
             ..default()
         }),
-        PhysicsPlugins::default(),
+        ..default()
+    }),));
+    app.add_plugins((
+        PlayerPlugin,
+        GameInputPlugin,
+        FirstPersonCameraPlugin,
+        WeaponPlugin,
     ));
-    app.add_plugins((PlayerPlugin, GameInputPlugin, FirstPersonCameraPlugin));
 
     let args = EngineArgs::parse();
     if args.show_game_info_overlay {
         app.add_systems(Startup, spawn_info_overlay);
     }
-    if args.enable_debug_renderer {
-        app.add_plugins(PhysicsDebugPlugin::default());
+    if args.enable_debug_ui {
+        app.add_plugins(DebugUiPlugin);
     }
 
     app
@@ -58,18 +62,15 @@ fn spawn_info_overlay(mut commands: Commands, info: Res<GameInfo>) {
         .map_or(info.name.to_string(), |v| format!("{} {}", info.name, v));
     let engine_info = format!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
-    commands.spawn(
-        TextBundle::from_section(
-            format!("{} ({})", game_info, engine_info),
-            TextStyle::default(),
-        )
-        .with_style(Style {
+    commands.spawn((
+        Text(format!("{} ({})", game_info, engine_info)),
+        Style {
             position_type: PositionType::Absolute,
             bottom: Val::Px(4.0),
             right: Val::Px(4.0),
             ..default()
-        }),
-    );
+        },
+    ));
 }
 
 #[derive(Parser)]
@@ -83,6 +84,6 @@ struct EngineArgs {
         default_value_t = true,
     )]
     pub show_game_info_overlay: bool,
-    #[arg(short = 'd', long = "debug-renderer", help = "Enable debug renderer")]
-    pub enable_debug_renderer: bool,
+    #[arg(short = 'u', long = "debug-ui", help = "Enable debug UI")]
+    pub enable_debug_ui: bool,
 }
