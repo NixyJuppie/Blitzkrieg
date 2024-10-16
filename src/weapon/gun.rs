@@ -138,6 +138,9 @@ fn update_state(
                         ));
                     }
 
+                    // TODO: Projectile physics
+                    // Blocked because of bleeding-edge bevy xD
+
                     *gun = GunState::Empty;
                 }
             }
