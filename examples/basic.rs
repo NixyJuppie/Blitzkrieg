@@ -3,7 +3,8 @@ use blitzkrieg::character::{EquippedWeapons, WeaponSlot};
 use blitzkrieg::player::Player;
 use blitzkrieg::prelude::*;
 use blitzkrieg::weapon::gun::{
-    AmmunitionStorage, AttachedAmmunitionStorage, FiringMechanism, GunState, LoadingMechanism,
+    Ammunition, AmmunitionStorage, AttachedAmmunitionStorage, FiringMechanism, GunState,
+    LoadingMechanism, ProjectileDefinition,
 };
 use blitzkrieg::{create_default_app, GameInfo};
 
@@ -32,14 +33,16 @@ fn setup(
     let gold = materials.add(Color::linear_rgb(1.0, 0.8, 0.0));
     let red = materials.add(Color::linear_rgb(1.0, 0.0, 0.0));
 
-    let weapons = spawn_weapons(&mut commands);
-    commands.spawn((
-        Player,
-        FirstPersonCameraTarget::new(1.5),
-        Mesh3d(capsule.clone()),
-        MeshMaterial3d(gold.clone()),
-        EquippedWeapons::new(&weapons),
-    ));
+    let weapons = spawn_weapons(&mut commands, &mut meshes, &mut materials);
+    commands
+        .spawn((
+            Player,
+            FirstPersonCameraTarget::new(1.5),
+            Mesh3d(capsule.clone()),
+            MeshMaterial3d(gold.clone()),
+            EquippedWeapons::new(&weapons),
+        ))
+        .add_children(&weapons.iter().filter_map(|w| *w).collect::<Vec<Entity>>()[..]);
 
     for x in -1..=1 {
         commands.spawn((
@@ -50,7 +53,22 @@ fn setup(
     }
 }
 
-fn spawn_weapons(commands: &mut Commands) -> [WeaponSlot; 3] {
+fn spawn_weapons(
+    commands: &mut Commands,
+    meshes: &mut Assets<Mesh>,
+    materials: &mut Assets<StandardMaterial>,
+) -> [WeaponSlot; 3] {
+    let ammunition = Ammunition {
+        bullet: ProjectileDefinition {
+            mesh: meshes.add(Capsule3d::new(0.01, 0.01)),
+            material: materials.add(Color::linear_rgb(1.0, 0.9, 0.0)),
+        },
+        casing: Some(ProjectileDefinition {
+            mesh: meshes.add(Capsule3d::new(0.02, 0.02)),
+            material: materials.add(Color::linear_rgb(0.7, 0.7, 0.7)),
+        }),
+    };
+
     [
         // Manual loading and firing - Mosin-Nagant
         Some(
@@ -59,7 +77,7 @@ fn spawn_weapons(commands: &mut Commands) -> [WeaponSlot; 3] {
                     GunState::Empty,
                     AttachedAmmunitionStorage(Some(AmmunitionStorage {
                         amount: 10,
-                        ..default()
+                        ammunition: ammunition.clone(),
                     })),
                     LoadingMechanism {
                         automatic: false,
@@ -79,7 +97,7 @@ fn spawn_weapons(commands: &mut Commands) -> [WeaponSlot; 3] {
                     GunState::Empty,
                     AttachedAmmunitionStorage(Some(AmmunitionStorage {
                         amount: 10,
-                        ..default()
+                        ammunition: ammunition.clone(),
                     })),
                     LoadingMechanism {
                         automatic: true,
@@ -99,7 +117,7 @@ fn spawn_weapons(commands: &mut Commands) -> [WeaponSlot; 3] {
                     GunState::Empty,
                     AttachedAmmunitionStorage(Some(AmmunitionStorage {
                         amount: 20,
-                        ..default()
+                        ammunition: ammunition.clone(),
                     })),
                     LoadingMechanism {
                         automatic: true,

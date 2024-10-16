@@ -22,8 +22,14 @@ pub struct FiringMechanism {
 
 #[derive(Clone, Default, Debug)]
 pub struct Ammunition {
-    pub bullet: (), // TODO
-    pub casing: (), // TODO
+    pub bullet: ProjectileDefinition,
+    pub casing: Option<ProjectileDefinition>,
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct ProjectileDefinition {
+    pub mesh: Handle<Mesh>,
+    pub material: Handle<StandardMaterial>,
 }
 
 #[derive(Default, Debug)]
@@ -63,10 +69,13 @@ fn update_state(
         &LoadingMechanism,
         &FiringMechanism,
         &WeaponState,
+        &GlobalTransform,
     )>,
+    mut commands: Commands,
     time: Res<Time>,
 ) {
-    for (mut gun, mut ammunition_storage, loading, firing, weapon) in weapons.iter_mut() {
+    for (mut gun, mut ammunition_storage, loading, firing, weapon, transform) in weapons.iter_mut()
+    {
         match gun.as_mut() {
             GunState::Empty => {
                 let Some(ref mut ammunition_storage) = ammunition_storage.0 else {
@@ -109,6 +118,26 @@ fn update_state(
                 timer.tick(time.delta());
                 if timer.finished() {
                     info!("Fired {ammunition:?}");
+
+                    let mut bullet_transform = transform.compute_transform();
+                    bullet_transform.translation += *bullet_transform.forward();
+                    commands.spawn((
+                        bullet_transform,
+                        Mesh3d(ammunition.bullet.mesh.clone()),
+                        MeshMaterial3d(ammunition.bullet.material.clone()),
+                    ));
+
+                    if let Some(ref casing) = ammunition.casing {
+                        let mut casing_transform = transform.compute_transform();
+                        casing_transform.translation += *casing_transform.up();
+
+                        commands.spawn((
+                            casing_transform,
+                            Mesh3d(casing.mesh.clone()),
+                            MeshMaterial3d(casing.material.clone()),
+                        ));
+                    }
+
                     *gun = GunState::Empty;
                 }
             }
